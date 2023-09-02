@@ -78,13 +78,10 @@ def login(driver, username, password, retry_count=0):
     password_div.send_keys(password)
     click(webdriver, ".submitButton-LQwxK8Bm")
 
-    if get(webdriver, "#g-recaptcha-response", 5, False):
-        if get(webdriver, ".antigate_solver.solved", 120, False):
-            click(webdriver, ".submitButton-LQwxK8Bm", wait=1)
-            click(webdriver, ".submitButton-LQwxK8Bm", wait=1)
-            click(webdriver, ".submitButton-LQwxK8Bm", wait=1)
-            sleep(5)
-
+    while get(driver, "#g-recaptcha-response", 5, False):
+        if get(driver, ".antigate_solver.solved", 120, False):
+            click(driver, ".submitButton-LQwxK8Bm", wait=4)
+            continue
         else:
             webdriver.refresh()
             login(driver, username, password, ++retry_count)
@@ -101,6 +98,21 @@ def extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
                        PHPL_points, RSHVB_source, RSHVB_time_frame,
                        JFPCCI_source, t3v_source):
     # selecting stock
+    # try 10 times before giving an error
+    counter = 0
+    while not get(webdriver, f'[data-symbol-short={stock}]', wait_for=False):
+        stocks = get_all(webdriver, ".wrap-IEe5qpW4")
+        actions.move_to_element(stocks[1]).perform()
+        stocks = get_all(webdriver, ".wrap-IEe5qpW4")
+        actions.move_to_element(stocks[len(stocks)//2]).perform()
+        stocks = get_all(webdriver, ".wrap-IEe5qpW4")
+        actions.move_to_element(stocks[-1]).perform()
+        counter += 1
+        if counter == 10:
+            print(f"{stock} was not found")
+            webdriver.quit()
+            exit()
+
     while get(webdriver, f'[data-symbol-short={stock}][data-active="false"]', wait_for=False):
         click(webdriver, f"[data-symbol-short={stock}]", wait=5)
 
