@@ -10,6 +10,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import xlwings as xw
+import win32com.client
+import os, os.path
+
 
 
 def get(driver, css, wait=0, wait_for=True, attr='', return_text=False):
@@ -201,11 +204,14 @@ def extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
 
 
 def excel_functions(stock):
+
+
     # Clearing data in the excel file
     excel_file = f"./resources/{stock}.xlsm"
 
     wb = xw.Book(excel_file)
     ws = wb.sheets['Data Placement']
+    ws.activate()
     app = wb.app
     # into brackets, the path of the macro
     data_clear_macro = app.macro(f"'{stock}.xlsm'!Module5.Delete_Data")
@@ -292,19 +298,19 @@ if hidden_settings := get(webdriver,
                           wait_for=False):
     click(webdriver, element=hidden_settings)
 
-# for tikker in tikker_data.keys()[1:]:
-#     time_interval, t3s_period, t3s_type,\
-#         PHPL_points, RSHVB_source, RSHVB_time_frame,\
-#         JFPCCI_source, t3v_source = [s.strip() if isinstance(s, str) else s
-#                                      for s in tikker_data[tikker]]
 
-    # stock = tikker
-    # extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type, PHPL_points,
-    #                    RSHVB_source, JFPCCI_source, t3v_source, )
-    # excel_functions(stock)
+# def run_analysis(stock_name):
+#     print(stock_name)
+#     # while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
+#     # print(user_input)
+#     extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
+#     excel_functions(stock_name)
 
+#     webdriver.quit()
+    
 while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
     extract_chart_data(webdriver, user_input, *tikker_data[user_input])
     excel_functions(user_input)
 
 webdriver.quit()
+
