@@ -5,7 +5,26 @@ from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QTableWi
 from PyQt6.QtCore import QTimer, QDateTime
 
 import json
+def get_stocks():
 
+    # Define the folder path where your Excel files are located
+    folder_path = 'resources'
+
+    # Initialize an empty list to store the stock names
+    stock_names = []
+
+    # List all files in the folder
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.xlsm') and not filename.startswith('~$'):
+            # Extract the stock name from the file name (remove the '.xlsm' extension)
+            stock_name = os.path.splitext(filename)[0]
+            stock_names.append(stock_name)
+
+    # Print the final list of stock names
+    return stock_names
+
+#get stocks from resources folder
+stocks = get_stocks()
 
 class AnalysisPopup(QDialog):
     def __init__(self, parent=None):
