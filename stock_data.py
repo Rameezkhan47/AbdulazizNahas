@@ -36,10 +36,17 @@ def get_stock_data(stock_name):
         stock_values = df.iloc[:, stock_column_index].tolist()
         return stock_values
     else:
-        print(f"Stock '{stock_name}' not found in the Excel file.")
-        return []
+        print(f"Stock '{stock_name}' not found in the Excel file. Adding default data...")
+        
+        # Add a new column with default data
+        default_data = ['48', '3', 'New', '2', 'HAB Trend Extreme', '48', 'Open', 'HAB High']
+        df[str(stock_name)] = default_data
+        
+        # Save the updated DataFrame back to the Excel file
+        df.to_excel(filename, index=False)
+        
+        return default_data
     
-
 def write_stock_data_to_excel(values):
     try:
         # Load the Excel file into a DataFrame
@@ -70,9 +77,8 @@ def write_stock_data_to_excel(values):
 
 if __name__ == '__main__':
     filename = './resources/Chart Setting.xlsx'
-    stock_name = "NVDA"
-    values = [48, 23, 'Checkasdasd', 2, 'HAB asdasd Extreme', 48, 'Open', 'HABasasd High']
-    write_stock_data_to_excel(filename, stock_name, values)
-
+    stock_name = '1120'
+    result = get_stock_data(stock_name)
+    print(result)
 
     

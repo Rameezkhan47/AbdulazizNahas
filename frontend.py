@@ -5,10 +5,15 @@ from PyQt6.QtWidgets import QApplication,QLineEdit, QDialog, QVBoxLayout, QLabel
 from PyQt6.QtCore import QTimer, QDateTime
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.action_chains import ActionChains
-# import trading_view
+import trading_view
 import stock_data
+import scheduler_queue as scheduler
 import json
 import os
+import threading
+from queue import Queue
+import time
+
 
 def get_stocks():
 
@@ -30,6 +35,7 @@ def get_stocks():
 
 #get stocks from resources folder
 stocks = get_stocks()
+stock_queue = Queue()
 
 class AnalysisPopup(QDialog):
     def __init__(self, parent=None):
@@ -44,7 +50,6 @@ class ChartSettingsPopup(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Edit Chart Settings")
         self.resize(800, 600)
-        # print("stock: ",stock)
         layout = QVBoxLayout(self)
         data = stock_data.get_stock_data(stock)
 
@@ -128,20 +133,38 @@ class ChartSettingsPopup(QDialog):
 
 
 class CountdownWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, stock, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         self.label = QLabel("1:00:00", self)
+        self.stock_name = stock
         layout.addWidget(self.label)
+        time = stock_data.get_stock_data(stock)
+        time = time[0]
         
-        self.remaining_seconds = 3600
+        if isinstance(time, int):
+            time = ((time)*3600)  
+        elif 'hour' in time or 'hours' in time:
+            time = (int(time.split()[0])*3600)
+            
+        elif 'minute' in time or 'minutes' in time:
+            time = (int(time.split()[0]) * 60)
+        elif 'second' in time or 'seconds' in time:
+            time = (int(time.split()[0]))
+        elif 'day' in time or 'days' in time:
+            time = (int(time.split()[0]) * (24*60*60))
+            
+        self.time = int(time)
+            
+        self.remaining_seconds = self.time
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_countdown)
         self.timer.start(1000)  # Update every second
         self.update_countdown()
 
     def update_countdown(self):
-        if self.remaining_seconds > 0:
+        print
+        if (self.remaining_seconds) > 0:
             hours = self.remaining_seconds // 3600
             minutes = (self.remaining_seconds % 3600) // 60
             seconds = self.remaining_seconds % 60
@@ -150,6 +173,18 @@ class CountdownWidget(QWidget):
             self.remaining_seconds -= 1
         else:
             self.timer.stop()
+            self.enqueue_for_analysis()
+            self.reset_timer()  # Call the method to reset the timer
+         
+
+    def enqueue_for_analysis(self):
+        stock_queue.put(self.stock_name)
+        
+    def reset_timer(self):
+        # Reset the timer back to the initial time (2 seconds in this case)
+        self.remaining_seconds = self.time
+        self.timer.start(1000)  # Start the timer again
+        
 
 class AnalysisHistoryPopup(QDialog):
     def __init__(self, parent=None):
@@ -193,6 +228,7 @@ class StockNameWidget(QWidget):
         self.run_button.clicked.connect(lambda: self.run_test(stock_name.lstrip()))
 
     def run_test(self, stock_name):
+        return
         print("stock_name: ", stock_name)
         # trading_view.run_analysis(stock_name)
         
@@ -240,10 +276,22 @@ class StockApp(QMainWindow):
         self.table.setShowGrid(True)  # Show grid lines
         layout.addWidget(self.table)
         self.load_data()
+        
+    def process_stock_queue(self):
+        while True:
+            stock_name = stock_queue.get()
+            print(stock_queue)
+            self.run_analysis(stock_name)
+    def run(self):
+        # Start a separate thread to process the stock queue
+        thread = threading.Thread(target=self.process_stock_queue)
+        thread.daemon = True  # This thread will exit when the main program exits
+        thread.start()
+
 
     def load_data(self):
         # Set the number of rows in the table
-        self.table.setRowCount(10)  # Example: 10 rows
+        self.table.setRowCount(len(stocks))  # Example: 10 rows
 
         # Populate the table with data from your sources
         for row, stock in enumerate(stocks):
@@ -266,13 +314,17 @@ class StockApp(QMainWindow):
             self.table.setCellWidget(row, 1, last_price_item)
             self.table.setItem(row, 2, change_percent_item)
             self.table.setCellWidget(row, 3, analysis_result_widget)
-            countdown_widget = CountdownWidget()
+            countdown_widget = CountdownWidget(stock, parent=self)
             self.table.setCellWidget(row, 4, countdown_widget)
             self.table.setCellWidget(row, 5, edit_settings_button)
             self.table.setRowHeight(row, 50)
 
-    def run_analysis(self, stock_item):
-        stock_name = stock_item.text()
+    def run_analysis(self, stock_name):
+        print("Running analysis for: ", stock_name)
+        # trading_view.run_analysis(stock_name)
+        
+        time.sleep(3)  # Pause for 5 seconds
+        return True
         # Call the test function with the stock_name
        
     def open_chart_settings_popup(self, stock):
@@ -283,6 +335,7 @@ def main():
     app = QApplication(sys.argv)
     window = StockApp()
     window.show()
+    window.run()  # Start the queue processing thread
     sys.exit(app.exec())
 
 if __name__ == "__main__":

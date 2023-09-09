@@ -298,14 +298,14 @@ if hidden_settings := get(webdriver,
     click(webdriver, element=hidden_settings)
 
 
-# def run_analysis(stock_name):
-#     print(stock_name)
-#     # while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
-#     # print(user_input)
-#     extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
-#     excel_functions(stock_name)
+def run_analysis(stock_name):
+    print(stock_name)
+    # while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
+    # print(user_input)
+    extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
+    excel_functions(stock_name)
 
-#     webdriver.quit()
+    webdriver.quit()
     
 while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
     extract_chart_data(webdriver, user_input, *tikker_data[user_input])
