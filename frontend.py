@@ -7,7 +7,6 @@ from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.action_chains import ActionChains
 import trading_view
 import stock_data
-import scheduler_queue as scheduler
 import json
 import os
 import threading
@@ -230,7 +229,7 @@ class StockNameWidget(QWidget):
     def run_test(self, stock_name):
         return
         print("stock_name: ", stock_name)
-        # trading_view.run_analysis(stock_name)
+        trading_view.run_analysis(stock_name)
         
 class LastPriceWidget(QWidget):
     def __init__(self, parent=None, excel_file=""):
@@ -321,7 +320,7 @@ class StockApp(QMainWindow):
 
     def run_analysis(self, stock_name):
         print("Running analysis for: ", stock_name)
-        # trading_view.run_analysis(stock_name)
+        trading_view.run_analysis(stock_name)
         
         time.sleep(3)  # Pause for 5 seconds
         return True
