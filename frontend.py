@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QApplication,QLineEdit, QDialog, QVBoxLayout, QLabel
 from PyQt6.QtCore import QTimer, QDateTime
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.action_chains import ActionChains
-import trading_view
+# import trading_view
 import stock_data
 import json
 import os
@@ -153,9 +153,10 @@ class CountdownWidget(QWidget):
         elif 'day' in time or 'days' in time:
             time = (int(time.split()[0]) * (24*60*60))
             
-        self.time = int(time)
-            
-        self.remaining_seconds = self.time
+        self.time = time
+        
+        print(time)
+        self.remaining_seconds = int(time)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_countdown)
         self.timer.start(1000)  # Update every second
@@ -320,7 +321,7 @@ class StockApp(QMainWindow):
 
     def run_analysis(self, stock_name):
         print("Running analysis for: ", stock_name)
-        trading_view.run_analysis(stock_name)
+        # trading_view.run_analysis(stock_name)
         
         time.sleep(3)  # Pause for 5 seconds
         return True
