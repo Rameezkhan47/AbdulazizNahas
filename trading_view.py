@@ -10,8 +10,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import xlwings as xw
-import os, os.path
-
 
 
 def get(driver, css, wait=0, wait_for=True, attr='', return_text=False):
@@ -100,23 +98,19 @@ def extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
                        PHPL_points, RSHVB_source, RSHVB_time_frame,
                        JFPCCI_source, t3v_source):
     # selecting stock
-    # try 10 times before giving an error
     counter = 0
-    while not get(webdriver, f'[data-symbol-short={stock}]', wait_for=False):
-        stocks = get_all(webdriver, ".wrap-IEe5qpW4")
-        actions.move_to_element(stocks[1]).perform()
-        stocks = get_all(webdriver, ".wrap-IEe5qpW4")
-        actions.move_to_element(stocks[len(stocks)//2]).perform()
-        stocks = get_all(webdriver, ".wrap-IEe5qpW4")
-        actions.move_to_element(stocks[-1]).perform()
+    click(webdriver, ".wrap-IEe5qpW4")
+    while not get(webdriver, f'[data-symbol-short="{stock}"]', wait_for=False):
+        for i in range(10):
+            actions.send_keys(Keys.DOWN)
+        actions.perform()
         counter += 1
-        if counter == 10:
+        if counter == 30:
             print(f"{stock} was not found")
-            webdriver.quit()
-            exit()
+            return True
 
-    while get(webdriver, f'[data-symbol-short={stock}][data-active="false"]', wait_for=False):
-        click(webdriver, f"[data-symbol-short={stock}]", wait=5)
+    while get(webdriver, f'[data-symbol-short="{stock}"][data-active="false"]', wait_for=False):
+        click(webdriver, f'[data-symbol-short="{stock}"]', wait=5)
 
     # selecting days interval
     click(webdriver, '#header-toolbar-intervals [aria-label="Time Interval"]', element_wait=10)
@@ -203,8 +197,6 @@ def extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
 
 
 def excel_functions(stock):
-
-
     # Clearing data in the excel file
     excel_file = f"./resources/{stock}.xlsm"
 
@@ -218,8 +210,6 @@ def excel_functions(stock):
     save_close_macro = app.macro(f"'{stock}.xlsm'!Module4.Save_Close")
     data_clear_macro()
     print("done clearing the data")
-    
-
 
     # Reading and filtering the downloaded data and copying to excel
     download_path = 'C:\\Users\\aamna\\Downloads'
@@ -250,8 +240,8 @@ excel_file_path = './resources/Chart Setting.xlsx'
 sheet_name = 'Testing Log'  # Change this to the name of the sheet you want to read
 
 # Read the data from the specified sheet into a DataFrame
-tikker_data = pd.read_excel(excel_file_path, sheet_name=sheet_name)
-tikker_data = {tikker: tikker_data[tikker] for tikker in tikker_data.keys()}
+tikker_data = pd.read_excel(excel_file_path)
+tikker_data = {str(tikker): tikker_data[tikker] for tikker in tikker_data.keys()}
 
 option = ChromeOptions()
 # option.add_argument("--headless=new")
@@ -286,11 +276,6 @@ if draggable_popup := get(webdriver, ".ui-draggable", wait_for=False):
 if get(webdriver, '[aria-label="Watchlist, details and news"][aria-pressed="false"]', wait_for=False):
     click(webdriver, '[aria-label="Watchlist, details and news"]')
 
-for i in range(7):
-    stocks = get_all(webdriver, ".wrap-IEe5qpW4")
-    actions.move_to_element(stocks[-1]).perform()
-    sleep(2)
-
 # opening settings if hidden
 if hidden_settings := get(webdriver,
                           ".closed-l31H9iuA .objectsTreeCanBeShown-l31H9iuA .iconArrow-l31H9iuA",
@@ -300,15 +285,16 @@ if hidden_settings := get(webdriver,
 
 def run_analysis(stock_name):
     print(stock_name)
-    # while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
-    # print(user_input)
     extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
     excel_functions(stock_name)
 
     webdriver.quit()
-    
+
+
 while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
-    extract_chart_data(webdriver, user_input, *tikker_data[user_input])
+    error = extract_chart_data(webdriver, user_input, *tikker_data[str(user_input)])
+    if error:
+        continue
     excel_functions(user_input)
 
 webdriver.quit()
