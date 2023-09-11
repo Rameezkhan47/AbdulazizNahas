@@ -1,11 +1,11 @@
 import sys
 from PyQt6.QtWidgets import QApplication,QHeaderView,QComboBox, QMainWindow, QTableWidget, QTableWidgetItem, QPushButton, QVBoxLayout, QWidget, QDialog, QLabel, QHBoxLayout
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import (Qt, pyqtSignal)
 from PyQt6.QtWidgets import QApplication,QLineEdit, QDialog, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QComboBox,QDateEdit
 from PyQt6.QtCore import QTimer, QDateTime
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.action_chains import ActionChains
-import trading_view
+# import trading_view
 import stock_data
 import json
 import os
@@ -205,23 +205,32 @@ class AnalysisHistoryPopup(QDialog):
         layout.addWidget(self.history_data_label)
 
 class AnalysisResultWidget(QWidget):
-    def __init__(self, parent=None, analysis_result=""):
+    def __init__(self, stock, parent=None):
         super().__init__(parent)
+        self.stock = stock  # Store the stock symbol
         layout = QHBoxLayout(self)
-        self.analysis_result_label = QLabel(analysis_result)
+        self.analysis_result_label = QLabel(self.get_latest_analysis_result())
         self.history_button = QPushButton("History")
         self.history_button.setMinimumHeight(30)
         self.history_button.clicked.connect(self.open_analysis_history_popup)
         layout.addWidget(self.analysis_result_label)
         layout.addWidget(self.history_button)
 
+    def get_latest_analysis_result(self):
+        return stock_data.read_value_from_excel(f'./resources/{self.stock}.xlsm', column=7, row=4)
+
+    def update_analysis_result_label(self):
+        latest_result = self.get_latest_analysis_result()
+        self.analysis_result_label.setText(latest_result)
+
     def open_analysis_history_popup(self):
         history_popup = AnalysisHistoryPopup(self)
         history_popup.exec()
         
 class StockNameWidget(QWidget):
-    def __init__(self, parent=None, stock_name=""):
+    def __init__(self, analysis_result_widget, parent=None, stock_name=""):
         super().__init__(parent)
+        self.analysis_result_widget = analysis_result_widget  # Store the reference to the AnalysisResultWidget
         self.stock_name = stock_name  # Store the stock_name as an instance variable
         layout = QHBoxLayout(self)
         self.analysis_result_label = QLabel(stock_name)
@@ -230,14 +239,15 @@ class StockNameWidget(QWidget):
         layout.addWidget(self.analysis_result_label)
         layout.addWidget(self.run_button)
 
-        # Connect the "Run" button's clicked signal to the slot that runs the test function
         self.run_button.clicked.connect(lambda: self.run_test(stock_name.lstrip()))
 
     def run_test(self, stock_name):
-        # return
+        # Run your test and update the analysis result
         print("stock_name: ", stock_name)
-        trading_view.run_analysis(stock_name)
         
+        # Assuming you have a method to update the analysis result in AnalysisResultWidget
+        self.analysis_result_widget.update_analysis_result_label()
+
 class LastPriceWidget(QWidget):
     def __init__(self, parent=None, excel_file=""):
         super().__init__(parent)
@@ -301,12 +311,13 @@ class StockApp(QMainWindow):
 
         # Populate the table with data from your sources
         for row, stock in enumerate(stocks):
-            stock_name_item = StockNameWidget(stock_name=stock)
             last_price_item = LastPriceWidget(excel_file=f"./resources/TSLA.xlsm")
             change_percent_item = QTableWidgetItem("+2.5%")
 
             # Create the custom widget for the analysis result
-            analysis_result_widget = AnalysisResultWidget(analysis_result="Result {}".format(stock))
+            analysis_result_widget = AnalysisResultWidget(stock)
+            stock_name_item = StockNameWidget(analysis_result_widget, stock_name=stock)
+            
             edit_settings_button = QPushButton("Edit")
             edit_settings_button.clicked.connect(lambda _, stock=stock: self.open_chart_settings_popup(stock))
 
@@ -327,7 +338,7 @@ class StockApp(QMainWindow):
 
     def run_analysis(self, stock_name):
         print("Running analysis for: ", stock_name)
-        trading_view.run_analysis(stock_name)
+        # trading_view.run_analysis(stock_name)
         
         time.sleep(3)  # Pause for 5 seconds
         return True
