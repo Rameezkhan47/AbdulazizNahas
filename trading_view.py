@@ -272,67 +272,67 @@ def excel_functions(stock):
 
 
 
-# # Specify the path to the Excel file and the sheet name
-# excel_file_path = './resources/Chart Setting.xlsx'
-# sheet_name = 'Testing Log'  # Change this to the name of the sheet you want to read
+# Specify the path to the Excel file and the sheet name
+excel_file_path = './resources/Chart Setting.xlsx'
+sheet_name = 'Testing Log'  # Change this to the name of the sheet you want to read
 
-# # Read the data from the specified sheet into a DataFrame
-# tikker_data = pd.read_excel(excel_file_path)
-# tikker_data = {str(tikker): tikker_data[tikker] for tikker in tikker_data.keys()}
+# Read the data from the specified sheet into a DataFrame
+tikker_data = pd.read_excel(excel_file_path)
+tikker_data = {str(tikker): tikker_data[tikker] for tikker in tikker_data.keys()}
 
-# option = ChromeOptions()
-# # option.add_argument("--headless=new")
-# option.add_extension('./plugin.zip')
-# option.add_argument('--no-sandbox')
-# option.add_argument('--disable-dev-shm-usage')
-# option.add_argument("--enable-logging")
-# option.add_argument("--log-level=3")
-# option.add_argument("--net-log-level=3")
-# option.add_argument("--start-maximized")
-# webdriver = Chrome(options=option)
-# webdriver.get("https://www.tradingview.com/chart/CKrVzyF2/")
-# actions = ActionChains(webdriver)
+option = ChromeOptions()
+# option.add_argument("--headless=new")
+option.add_extension('./plugin.zip')
+option.add_argument('--no-sandbox')
+option.add_argument('--disable-dev-shm-usage')
+option.add_argument("--enable-logging")
+option.add_argument("--log-level=3")
+option.add_argument("--net-log-level=3")
+option.add_argument("--start-maximized")
+webdriver = Chrome(options=option)
+webdriver.get("https://www.tradingview.com/chart/CKrVzyF2/")
+actions = ActionChains(webdriver)
 
-# # signing in to the website
-# login(webdriver, "Azooz.nas@gmail.com", "Azooz0500306968!")
-# webdriver.refresh()
-# sleep(5)
+# signing in to the website
+login(webdriver, "Azooz.nas@gmail.com", "Azooz0500306968!")
+webdriver.refresh()
+sleep(5)
 
-# # moving draggable popup to bottom of the page so that it doesn't obstruct clicks
-# if draggable_popup := get(webdriver, ".ui-draggable", wait_for=False):
-#     js_move_element = """
-#     var elementToMove = arguments[0];
-#     var targetLocation = arguments[1];
-#     targetLocation.appendChild(elementToMove);
-#     """
+# moving draggable popup to bottom of the page so that it doesn't obstruct clicks
+if draggable_popup := get(webdriver, ".ui-draggable", wait_for=False):
+    js_move_element = """
+    var elementToMove = arguments[0];
+    var targetLocation = arguments[1];
+    targetLocation.appendChild(elementToMove);
+    """
 
-#     webdriver.execute_script(js_move_element, draggable_popup,
-#                              get(webdriver, '[aria-label="Notifications"]', 10))
+    webdriver.execute_script(js_move_element, draggable_popup,
+                             get(webdriver, '[aria-label="Notifications"]', 10))
 
-# # opening watchlist if not opened and loading all stocks
-# if get(webdriver, '[aria-label="Watchlist, details and news"][aria-pressed="false"]', wait_for=False):
-#     click(webdriver, '[aria-label="Watchlist, details and news"]')
+# opening watchlist if not opened and loading all stocks
+if get(webdriver, '[aria-label="Watchlist, details and news"][aria-pressed="false"]', wait_for=False):
+    click(webdriver, '[aria-label="Watchlist, details and news"]')
 
-# # opening settings if hidden
-# if hidden_settings := get(webdriver,
-#                           ".closed-l31H9iuA .objectsTreeCanBeShown-l31H9iuA .iconArrow-l31H9iuA",
-#                           wait_for=False):
-#     click(webdriver, element=hidden_settings)
+# opening settings if hidden
+if hidden_settings := get(webdriver,
+                          ".closed-l31H9iuA .objectsTreeCanBeShown-l31H9iuA .iconArrow-l31H9iuA",
+                          wait_for=False):
+    click(webdriver, element=hidden_settings)
 
 
-# def run_analysis(stock_name):
-#     print(*tikker_data[stock_name][:-2])
-#     extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
-#     excel_functions(stock_name)
+def run_analysis(stock_name):
+    print(*tikker_data[stock_name][:-2])
+    extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
+    excel_functions(stock_name)
 
-#     # webdriver.quit()
+    # webdriver.quit()
 
 
 while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
-    # error = extract_chart_data(webdriver, user_input, *tikker_data[str(user_input)][:-2])
-    # # print(*tikker_data[str(user_input)][:-2])
-    # if error:
-    #     continue
+    error = extract_chart_data(webdriver, user_input, *tikker_data[str(user_input)][:-2])
+    # print(*tikker_data[str(user_input)][:-2])
+    if error:
+        continue
     excel_functions(user_input)
 
-# webdriver.quit()
+webdriver.quit()
