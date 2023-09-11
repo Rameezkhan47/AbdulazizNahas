@@ -1,6 +1,8 @@
+import glob
+import os
 from time import sleep
 from os import listdir
-
+from datetime import datetime
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,6 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import xlwings as xw
+import stock_data as data
 
 
 def get(driver, css, wait=0, wait_for=True, attr='', return_text=False):
@@ -88,7 +91,10 @@ def login(driver, username, password, retry_count=0):
 
 
 def time_interval_parser(time_in_hours):
-    time_interval = int(time_in_hours)
+    print("time_in_hours: ", time_in_hours)
+    print("time_in_hours: ", type(time_in_hours))
+    # time_interval = int(time_in_hours)
+    time_interval = time_in_hours
     is_in_days = time_in_hours // 24
 
     return time_interval*60, f"{is_in_days}D" if is_in_days else is_in_days
@@ -195,11 +201,27 @@ def extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
     click(webdriver, '#time-format-iso')
     click(webdriver, '[data-name="submit-button"]')
 
+def extract_chart_data_with_retry(webdriver, stock, time_interval, t3s_period, t3s_type,
+                                  PHPL_points, RSHVB_source, RSHVB_time_frame,
+                                  JFPCCI_source, t3v_source):
+    MAX_RETRIES = 6  # Set the maximum number of retries
+
+    for _ in range(MAX_RETRIES):
+        try:
+            extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
+                               PHPL_points, RSHVB_source, RSHVB_time_frame,
+                               JFPCCI_source, t3v_source)
+            break  # If the function completes without errors, break out of the loop
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            print("Reloading the page and retrying...")
+            webdriver.refresh()  # Reload the page
+            sleep(5)  # Wait for some time before retrying
 
 def excel_functions(stock):
     # Clearing data in the excel file
     excel_file = f"./resources/{stock}.xlsm"
-
+    
     wb = xw.Book(excel_file)
     ws = wb.sheets['Data Placement']
     ws.activate()
@@ -220,7 +242,10 @@ def excel_functions(stock):
     else:
         print("No matching CSV files found.")
         return
-    filtered_df = df[df['time'] >= '2018-01-01']
+    stock_data = data.get_stock_data(stock)
+    date = stock_data[-1].date.strftime('%Y-%m-%d')
+    print("date is: ", date)
+    filtered_df = df[df['time'] >= date]
 
     ws.range('C2').value = filtered_df.values.tolist()
     print("Filtered CSV saved successfully.")
@@ -233,6 +258,17 @@ def excel_functions(stock):
     wb.save()  # Save the workbook
     wb.close()  # Close the workbook
     app.quit()
+    
+    files_to_delete = glob.glob(os.path.join(download_path, f"*{stock}*.xlsm"))
+    
+    for file_to_delete in files_to_delete:
+        if os.path.exists(file_to_delete):
+            os.remove(file_to_delete)
+            print(f'File {file_to_delete} deleted from Downloads folder.')
+        else:
+            print(f'File {file_to_delete} not found in Downloads folder.')
+
+
 
 
 # Specify the path to the Excel file and the sheet name
@@ -284,18 +320,18 @@ if hidden_settings := get(webdriver,
 
 
 def run_analysis(stock_name):
-    print(stock_name)
+    print(*tikker_data[stock_name][:-2])
     extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
     excel_functions(stock_name)
 
-    webdriver.quit()
+    # webdriver.quit()
 
 
 while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
-    error = extract_chart_data(webdriver, user_input, *tikker_data[str(user_input)])
+    error = extract_chart_data(webdriver, user_input, *tikker_data[str(user_input)][:-2])
+    # print(*tikker_data[str(user_input)][:-2])
     if error:
         continue
     excel_functions(user_input)
 
 webdriver.quit()
-

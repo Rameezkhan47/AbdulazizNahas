@@ -5,13 +5,15 @@ from PyQt6.QtWidgets import QApplication,QLineEdit, QDialog, QVBoxLayout, QLabel
 from PyQt6.QtCore import QTimer, QDateTime
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.action_chains import ActionChains
-# import trading_view
+import trading_view
 import stock_data
 import json
 import os
 import threading
 from queue import Queue
 import time
+from datetime import datetime
+
 
 
 def get_stocks():
@@ -74,7 +76,9 @@ class ChartSettingsPopup(QDialog):
             ("RSHVB - Time Frame    ", [str(data[5]),"HAB Trend Extreme", "More Values..."] ),
             ("JFPCCI - Source", [str(data[6]),"Open", "More Values..."]),
             ("T3V - Source", [str(data[7]),"HAB High", "More Values"]),
-            ("Start date filter on the extracted data", ["1-Jun-2018", "More Values..."]),
+            ("Timer to next analysis", [str(data[8]),"3 day", "2 day", "1 day", "12 hours", "6 hours", "4 hours", "3 hours", "2 hours", "1 hour", "3 seconds"]),
+            ("Start date filter on the extracted data", [QDateEdit(data[9])]),
+
         ]
 
         self.settings_table.setRowCount(len(settings_data))
@@ -124,7 +128,8 @@ class ChartSettingsPopup(QDialog):
 
             data.append((indicator, value))
         values = [value for _, value in data]
-
+        date_format = "%d-%b-%Y"
+        values[-1] = datetime.strptime(values[-1], date_format)
         stock_data.write_stock_data_to_excel(values)
 
 
@@ -139,10 +144,13 @@ class CountdownWidget(QWidget):
         self.stock_name = stock
         layout.addWidget(self.label)
         time = stock_data.get_stock_data(stock)
-        time = time[0]
+        time = time[8]
+        # time = 2
+        
         
         if isinstance(time, int):
             time = ((time)*3600)  
+            # time = time
         elif 'hour' in time or 'hours' in time:
             time = (int(time.split()[0])*3600)
             
@@ -152,10 +160,7 @@ class CountdownWidget(QWidget):
             time = (int(time.split()[0]))
         elif 'day' in time or 'days' in time:
             time = (int(time.split()[0]) * (24*60*60))
-            
         self.time = time
-        
-        print(time)
         self.remaining_seconds = int(time)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_countdown)
@@ -163,7 +168,6 @@ class CountdownWidget(QWidget):
         self.update_countdown()
 
     def update_countdown(self):
-        print
         if (self.remaining_seconds) > 0:
             hours = self.remaining_seconds // 3600
             minutes = (self.remaining_seconds % 3600) // 60
@@ -182,7 +186,9 @@ class CountdownWidget(QWidget):
         
     def reset_timer(self):
         # Reset the timer back to the initial time (2 seconds in this case)
-        self.remaining_seconds = self.time
+        # self.remaining_seconds = self.time
+        self.remaining_seconds = 2
+        
         self.timer.start(1000)  # Start the timer again
         
 
@@ -228,7 +234,7 @@ class StockNameWidget(QWidget):
         self.run_button.clicked.connect(lambda: self.run_test(stock_name.lstrip()))
 
     def run_test(self, stock_name):
-        return
+        # return
         print("stock_name: ", stock_name)
         trading_view.run_analysis(stock_name)
         
@@ -321,7 +327,7 @@ class StockApp(QMainWindow):
 
     def run_analysis(self, stock_name):
         print("Running analysis for: ", stock_name)
-        # trading_view.run_analysis(stock_name)
+        trading_view.run_analysis(stock_name)
         
         time.sleep(3)  # Pause for 5 seconds
         return True

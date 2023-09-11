@@ -1,3 +1,4 @@
+import datetime
 import pandas as pd
 
 
@@ -34,12 +35,13 @@ def get_stock_data(stock_name):
     if stock_column_index is not None:
         # Extract all values under the stock name
         stock_values = df.iloc[:, stock_column_index].tolist()
+        # print(stock_values)
         return stock_values
     else:
         print(f"Stock '{stock_name}' not found in the Excel file. Adding default data...")
         
         # Add a new column with default data
-        default_data = ['48', '3', 'New', '2', 'HAB Trend Extreme', '48', 'Open', 'HAB High']
+        default_data = ['48', '3', 'New', '2', 'HAB Trend Extreme', '48', 'Open', 'HAB High', datetime.datetime(2018, 1, 4, 0, 0), 4]
         df[str(stock_name)] = default_data
         
         # Save the updated DataFrame back to the Excel file
@@ -62,7 +64,7 @@ def write_stock_data_to_excel(values):
 
         if stock_column_index is not None:
             # Write the values to the specified column
-            new_values = values[1:-1]
+            new_values = values[1:]
 
             df.iloc[:, stock_column_index] = new_values
 
