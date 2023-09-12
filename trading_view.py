@@ -10,6 +10,7 @@ from selenium.common.exceptions import ElementClickInterceptedException, Element
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.alert import Alert
 import pandas as pd
 import xlwings as xw
 import stock_data as data
@@ -216,6 +217,8 @@ def extract_chart_data_with_retry(webdriver, stock, time_interval, t3s_period, t
             print(f"An error occurred: {str(e)}")
             print("Reloading the page and retrying...")
             webdriver.refresh()  # Reload the page
+            sleep(1)
+            Alert(webdriver).accept()
             sleep(5)  # Wait for some time before retrying
 
 def excel_functions(stock):
