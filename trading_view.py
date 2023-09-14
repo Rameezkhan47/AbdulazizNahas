@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 from time import sleep
 from os import listdir
@@ -95,8 +96,8 @@ def time_interval_parser(time_in_hours):
     print("time_in_hours: ", time_in_hours)
     print("time_in_hours: ", type(time_in_hours))
     # time_interval = int(time_in_hours)
-    time_interval = time_in_hours
-    is_in_days = time_in_hours // 24
+    time_interval = int(time_in_hours)
+    is_in_days = int(time_in_hours) // 24
 
     return time_interval*60, f"{is_in_days}D" if is_in_days else is_in_days
 
@@ -206,6 +207,7 @@ def extract_chart_data_with_retry(webdriver, stock, time_interval, t3s_period, t
                                   PHPL_points, RSHVB_source, RSHVB_time_frame,
                                   JFPCCI_source, t3v_source):
     MAX_RETRIES = 6  # Set the maximum number of retries
+    # sleep(10)
 
     for _ in range(MAX_RETRIES):
         try:
@@ -233,7 +235,7 @@ def excel_functions(stock):
     data_clear_macro = app.macro(f"'{stock}.xlsm'!Module5.Delete_Data")
     live_trading_macro = app.macro(f"'{stock}.xlsm'!Module6.RunAna2")
     save_close_macro = app.macro(f"'{stock}.xlsm'!Module4.Save_Close")
-    # data_clear_macro()
+    data_clear_macro()
     print("done clearing the data")
 
     # Reading and filtering the downloaded data and copying to excel
@@ -255,22 +257,53 @@ def excel_functions(stock):
     ws.range('C2').value = filtered_df.values.tolist()
     print("Filtered CSV saved successfully.")
 
-    # live_trading_macro()
+    live_trading_macro()
 
-    # sleep(10)
-    # save_close_macro()
-    # sleep(10)
+    sleep(10)
+    save_close_macro()
+    sleep(10)
     wb.save()  # Save the workbook
     wb.close()  # Close the workbook
     app.quit()
     
-    print("here")
+      # Create a dictionary for the stock history
+    timestamp = datetime.today().strftime('%Y %m %d %H %M %S')
+    stock_history = {
+        stock: {
+            timestamp: 2313
+        }
+    }
+
+    # Write the data to a JSON file
+    json_file_path = f"./resources/history.json"
+
+    # Check if the JSON file exists or is empty
+    if os.path.exists(json_file_path) and os.path.getsize(json_file_path) > 0:
+        with open(json_file_path, 'r') as json_file:
+            existing_data = json.load(json_file)
+    else:
+        existing_data = {}
+
+    # Update the JSON data with the new stock history
+    if stock in existing_data:
+        existing_data[stock][timestamp] = 2313
+    else:
+        existing_data.update(stock_history)
+
+    with open(json_file_path, 'w') as json_file:
+        # Write the updated JSON data back to the file
+        json.dump(existing_data, json_file, indent=4)
+
+    print(f"JSON file updated with history for {stock}")
+
+    # Delete downloaded files
     for filename in os.listdir(download_path):
             if stock.upper() in filename:
                 file_path = os.path.join(download_path, filename)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
                     print(f"Deleted file: {file_path}")
+                    
 
 
 
@@ -324,18 +357,18 @@ if hidden_settings := get(webdriver,
 
 
 def run_analysis(stock_name):
-    print(*tikker_data[stock_name][:-2])
-    extract_chart_data(webdriver, stock_name, *tikker_data[stock_name])
+    # print(*tikker_data[stock_name][:-2])
+    extract_chart_data_with_retry(webdriver, stock_name, *tikker_data[stock_name][:-2])
     excel_functions(stock_name)
 
     # webdriver.quit()
 
 
-while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
-    error = extract_chart_data(webdriver, user_input, *tikker_data[str(user_input)][:-2])
-    # print(*tikker_data[str(user_input)][:-2])
-    if error:
-        continue
-    excel_functions(user_input)
+# while (user_input := input("Enter Stock name to extract data or type \"exit\" to turn off program:\t")) != "exit":
+#     error = extract_chart_data(webdriver, user_input, *tikker_data[str(user_input)][:-2])
+#     # print(*tikker_data[str(user_input)][:-2])
+#     if error:
+#         continue
+#     excel_functions(user_input)
 
-webdriver.quit()
+# webdriver.quit()

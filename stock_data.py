@@ -1,9 +1,11 @@
 import datetime
+import numpy as np
 import pandas as pd
 
 
 def read_value_from_excel(filename, column=5, row=5):
     try:
+        print(filename)
         # Read the Excel file into a pandas DataFrame
         excel_file = pd.ExcelFile(filename)
 
@@ -13,9 +15,28 @@ def read_value_from_excel(filename, column=5, row=5):
 
         cell_value = df.iloc[row-2, column-1]
         excel_file.close()
-        return cell_value
+        return str(cell_value)
     except Exception as e:
         return "No Value"  # Return the error message as a string
+    
+def read_all_column_values(column):
+    try:
+        # Read the Excel file into a pandas DataFrame
+        excel_file = pd.ExcelFile('./resources/Dropdown for Chart Settings.xlsx')
+
+        # Access a specific sheet by name
+        sheet_name = 'Sheet1'  # Replace with the name of the sheet you want to access
+        df = excel_file.parse(sheet_name)
+
+        # Read all values from the specified column
+        column_values = df.iloc[:, column-1].astype(str).tolist()
+        column_values = [value for value in column_values if value != 'nan']
+        column_values = [value.split('.')[0] for value in column_values]
+        
+        excel_file.close()
+        return column_values
+    except Exception as e:
+        return []  # Return an empty list if there's an error
     
     
 def get_stock_data(stock_name):
@@ -39,7 +60,7 @@ def get_stock_data(stock_name):
         print(f"Stock '{stock_name}' not found in the Excel file. Adding default data...")
         
         # Add a new column with default data
-        default_data = ['48', '3', 'New', '2', 'HAB Trend Extreme', '48', 'Open', 'HAB High', datetime.datetime(2018, 1, 4, 0, 0), 4]
+        default_data = ['48', '3', 'New', '2', 'HAB Trend Extreme', '48', 'Open', 'HAB High', 4, datetime.datetime(2018, 1, 4, 0, 0)]
         df[str(stock_name)] = default_data
         
         # Save the updated DataFrame back to the Excel file
@@ -76,8 +97,8 @@ def write_stock_data_to_excel(values):
         print(f"An error occurred: {str(e)}")
 
 if __name__ == '__main__':
-    analysis_result = read_value_from_excel(f'./resources/TSLA.xlsm', column=7, row=4)
-    print("Analysis result: ", analysis_result)
+    all_values = read_all_column_values(1)
+    print("result: ", all_values)
 
 
     
