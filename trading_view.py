@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import re
 from time import sleep
 from os import listdir
 from datetime import datetime
@@ -93,13 +94,16 @@ def login(driver, username, password, retry_count=0):
 
 
 def time_interval_parser(time_in_hours):
-    print("time_in_hours: ", time_in_hours)
-    print("time_in_hours: ", type(time_in_hours))
-    # time_interval = int(time_in_hours)
-    time_interval = int(time_in_hours)
-    is_in_days = int(time_in_hours) // 24
+    if isinstance(time_in_hours, int):
+        time_interval = time_in_hours
+    elif isinstance(time_in_hours, str):
+        match = re.search(r'\d+', time_in_hours)
+        time_interval = int(match.group())
+        if 'day' in time_in_hours or 'days' in time_in_hours:
+            time_interval *= 24
 
-    return time_interval*60, f"{is_in_days}D" if is_in_days else is_in_days
+    is_in_days = time_interval // 24
+    return time_interval * 60, f"{is_in_days}D" if is_in_days else is_in_days
 
 
 def extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
