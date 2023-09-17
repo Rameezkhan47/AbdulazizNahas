@@ -94,7 +94,17 @@ def write_stock_data_to_excel(values):
             print(f"Stock '{values[0]}' not found in the Excel file.")
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"An error occurrasdadasdasded: {str(e)}")
+        
+def get_formatted_value(input_string):
+    modified_string = input_string.replace(' ', '-')
+    return modified_string
+
+    RSHVB_source = get_formatted_value(RSHVB_source)
+    print("formatted RSHVB_source:  ",RSHVB_source)
+
+    click(webdriver, f'[id="id_in_1_item_{RSHVB_source}"]', element_wait=5)
+
 
 if __name__ == '__main__':
     all_values = read_all_column_values(1)

@@ -110,6 +110,8 @@ def extract_chart_data(webdriver, stock, time_interval, t3s_period, t3s_type,
                        PHPL_points, RSHVB_source, RSHVB_time_frame,
                        JFPCCI_source, t3v_source):
     # selecting stock
+    
+    
     counter = 0
     click(webdriver, ".wrap-IEe5qpW4")
     while not get(webdriver, f'[data-symbol-short="{stock}"]', wait_for=False):
